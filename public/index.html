@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <mela charset="UTF-8">
+  <meta charset="UTF-8">
   <title>Quiz Multijoueur</title>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -19,7 +19,35 @@
     .avatar-option { font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; border: 2px solid transparent; }
     .avatar-option.selected { border-color: #864cbf; background-color: #f0e6ff; transform: scale(1.15); }
     .opt-btn { background: #fff; border: 2px solid #ddd; padding: 15px; margin: 5px; width: 45%; font-size: 16px; border-radius: 8px; }
-  </style>
+  </style><!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Multijoueur</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
+        .hidden { display: none !important; }
+        button { cursor: pointer; padding: 10px 20px; font-size: 16px; border-radius: 8px; border: none; }
+        .btn-main { background: #864cbf; color: white; font-weight: bold; }
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; height: 200px; margin: 30px 0; gap: 12px; }
+        .podium-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .podium-bar { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .step-1 .podium-bar { height: 130px; background: #ffd700; }
+        .step-2 .podium-bar { height: 90px; background: #c0c0c0; }
+        .step-3 .podium-bar { height: 60px; background: #cd7f32; }
+        .avatar-option { font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; border: 2px solid transparent; }
+        .avatar-option.selected { border-color: #864cbf; background-color: #f0e6ff; transform: scale(1.15); }
+        .opt-btn { background: #fff; border: 2px solid #ddd; padding: 15px; margin: 5px; width: 45%; font-size: 16px; border-radius: 8px; }
+        
+        /* Nouveaux styles pour la barre de temps et les couleurs */
+        #timer-bar-container { width: 100%; height: 10px; background-color: #e0e0e0; margin-bottom: 10px; border-radius: 5px; overflow: hidden; display: none; }
+        #timer-bar { height: 100%; background-color: #4caf50; width: 100%; transition: width linear; }
+        .btn-correct { background-color: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+        .btn-wrong { background-color: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
+    </style>
+</head>
 </head>
 <body>
 
