@@ -213,22 +213,61 @@
 
       const sorted = Object.values(data.players).sort((a, b) => b.score - a.score);
       setPodium('p1', sorted[0]);
-      setPodium('p2', sorted[1]);
-      setPodium('p3', sorted[2]);
+socket.on('gameOver', (data) => {
+    document.getElementById('gameScreen').classList.add('hidden');
+    document.getElementById('timer-bar-container').style.display = 'none'; // Masquer la barre de temps
+    document.getElementById('endScreen').classList.remove('hidden');
 
-      document.getElementById('statAccuracy').innerText = `${data.stats.accuracy}%`;
-      if (data.stats.fastestPlayer) {
+    const sorted = Object.values(data.players).sort((a, b) => b.score - a.score);
+    setPodium('p1', sorted[0]);
+    setPodium('p2', sorted[1]);
+    setPodium('p3', sorted[2]);
+
+    document.getElementById('statAccuracy').innerText = `${data.stats.accuracy}%`;
+    if (data.stats.fastestPlayer) {
         document.getElementById('statFastest').innerText = `${data.stats.fastestPlayer} (${(data.stats.fastestTime/1000).toFixed(2)}s)`;
-      } else {
+    } else {
         document.getElementById('statFastest').innerText = "Aucun";
-      }
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    });
-
-    function setPodium(prefix, player) {
-      document.getElementById(`${prefix}-name`).innerText = player ? player.name : '-';
-      document.getElementById(`${prefix}-score`).innerText = player ? `${player.score} pts` : '';
     }
-  </script>
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+});
+
+function setPodium(prefix, player) {
+    document.getElementById(`${prefix}-nom`).innerText = player ? player.name : '-';
+    document.getElementById(`${prefix}-score`).innerText = player ? `${player.score} pts` : '';
+}
+
+// Fonction pour gérer les sons de réussite ou d'erreur
+function playSound(type) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    } catch (e) {
+        console.log("Audio bloqué ou non pris en charge");
+    }
+}
+</script>
 </body>
 </html>
