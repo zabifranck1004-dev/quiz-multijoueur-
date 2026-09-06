@@ -12,7 +12,27 @@ app.use(express.static('public'));
 // Structure pour stocker les salons
 const rooms = {};
 
-io.on('connection', (socket) => {
+io.on('connection', (socket) => {// Démarrer la partie (par l'hôte)
+    socket.on('startGame', () => {
+        const roomCode = socket.roomCode;
+        const room = rooms[roomCode];
+
+        if (!room || room.host !== socket.id) return; // Seul l'hôte peut lancer
+
+        // Liste de lettres pour le Petit Bac
+        const alphabet = "ABCDEFGHIJKLMNOPRSTUV";
+        const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+
+        room.gameState = 'playing';
+        room.currentLetter = randomLetter;
+
+        // Informer tous les joueurs du salon que la partie commence avec la lettre
+        io.to(roomCode).emit('gameStarted', {
+            letter: randomLetter
+        });
+
+        console.log(`Partie lancée dans le salon ${roomCode} - Lettre : ${randomLetter}`);
+    });
     console.log(`Un joueur s'est connecté : ${socket.id}`);
 
     // Création d'un salon
