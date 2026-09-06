@@ -13,7 +13,34 @@ app.use(express.static('public'));
 const rooms = {};
 
 io.on('connection', (socket) => {// Démarrer la partie (par l'hôte)
-    socket.on('startGame', () => {
+    socket.on('startGame', () => {// Réception des réponses d'un joueur
+    socket.on('submitAnswers', (answers) => {
+        const roomCode = socket.roomCode;
+        const room = rooms[roomCode];
+
+        if (!room) return;
+
+        // Enregistrer les réponses du joueur
+        room.answers[socket.id] = answers;
+        console.log(`Réponses reçues de ${socket.id} dans le salon ${roomCode}`);
+
+        // Vérifier si tout le monde a répondu
+        if (Object.keys(room.answers).length === room.players.length) {
+            room.gameState = 'results';
+            
+            // Pour l'instant, on renvoie simplement toutes les réponses à tout le monde
+            io.to(roomCode).emit('gameOver', {
+                answers: room.answers,
+                players: room.players,
+                letter: room.currentLetter
+            });
+
+            console.log(`Fin de manche pour le salon ${roomCode}`);
+        } else {
+            // Informer le joueur qu'il a bien validé et qu'il attend les autres
+            socket.emit('waitingForOthers');
+        }
+    });
         const roomCode = socket.roomCode;
         const room = rooms[roomCode];
 
