@@ -14,7 +14,7 @@ io.on('connection', (socket) => {
     console.log('Un utilisateur s\'est connecté :', socket.id);
 
     socket.on('createRoom', (data) => {
-        const roomCode = Math.random().toString(36.substring(2, 6).toUpperCase();
+        const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
             players: {},
             host: socket.id
