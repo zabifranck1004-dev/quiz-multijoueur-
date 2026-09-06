@@ -267,6 +267,39 @@ function playSound(type) {
     } catch (e) {
         console.log("Audio bloqué ou non pris en charge");
     }
+}let selectedAvatar = '🦊'; // Avatar par défaut
+
+// Gestion du choix de l'avatar
+function selectAvatar(element, avatar) {
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedAvatar = avatar;
+}
+
+// Fonction appelée quand on clique sur "Créer un salon"
+function createRoom() {
+    const username = document.getElementById('username').value.trim();
+    if (!username) {
+        alert("Veuillez entrer un pseudo !");
+        return;
+    }
+    socket.emit('createRoom', { username: username, avatar: selectedAvatar });
+}
+
+// Fonction appelée quand on clique sur "Rejoindre un salon"
+function joinRoom() {
+    const username = document.getElementById('username').value.trim();
+    const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
+    
+    if (!username) {
+        alert("Veuillez entrer un pseudo !");
+        return;
+    }
+    if (!roomCode) {
+        alert("Veuillez entrer un code de salon !");
+        return;
+    }
+    socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
 }
 </script>
 </body>
