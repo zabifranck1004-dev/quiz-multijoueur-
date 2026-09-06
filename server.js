@@ -10,11 +10,17 @@ app.use(express.static('public'));
 
 const rooms = {};
 
+// Liste de questions enrichie avec les niveaux de difficulté
 const questionsList = [
-    { question: "Quelle est la capitale de la France ?", options: ["Londres", "Berlin", "Paris", "Madrid"], answer: 2 },
-    { question: "Combien font 5 x 8 ?", options: ["35", "40", "45", "50"], answer: 1 },
-    { question: "Quel langage est utilisé pour le web côté client ?", options: ["Python", "C++", "JavaScript", "Java"], answer: 2 },
-    { question: "Quel est l'océan le plus grand du monde ?", options: ["Océan Atlantique", "Océan Pacifique", "Océan Indien", "Océan Arctique"], answer: 1 }
+    { question: "Quelle est la capitale de la France ?", options: ["Londres", "Berlin", "Paris", "Madrid"], answer: 2, difficulty: "Facile" },
+    { question: "Combien font 5 x 8 ?", options: ["35", "40", "45", "50"], answer: 1, difficulty: "Facile" },
+    { question: "Quel animal est connu pour sa lenteur ?", options: ["Le guépard", "Le lièvre", "Le paresseux", "Le cheval"], answer: 2, difficulty: "Facile" },
+    { question: "Quel langage est utilisé pour le web côté client ?", options: ["Python", "C++", "JavaScript", "Java"], answer: 2, difficulty: "Moyen" },
+    { question: "Quel est l'océan le plus grand du monde ?", options: ["Océan Atlantique", "Océan Pacifique", "Océan Indien", "Océan Arctique"], answer: 1, difficulty: "Moyen" },
+    { question: "Combien y a-t-il de continents sur Terre ?", options: ["5", "6", "7", "8"], answer: 2, difficulty: "Moyen" },
+    { question: "En quelle année a eu lieu le premier pas sur la Lune ?", options: ["1965", "1969", "1971", "1973"], answer: 1, difficulty: "Difficile" },
+    { question: "Quel est l'élément chimique dont le symbole est Au ?", options: ["Argent", "Cuivre", "Or", "Aluminium"], answer: 2, difficulty: "Difficile" },
+    { question: "Qui a peint La Joconde ?", options: ["Van Gogh", "Picasso", "Léonard de Vinci", "Monet"], answer: 2, difficulty: "Difficile" }
 ];
 
 io.on('connection', (socket) => {
@@ -63,13 +69,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('submitAnswer', (data) => {
-        const room = rooms[data.roomCode];
+        const room = rooms[roomCode];
         if (room) {
             const player = room.players[socket.id];
             if (player && !player.isEliminated) {
                 const currentQ = questionsList[room.currentQuestion - 1];
                 if (currentQ && data.index === currentQ.answer) {
-                    player.score += 10;
+                    // Bonus de points selon la difficulté
+                    let points = 10;
+                    if (currentQ.difficulty === "Moyen") points = 15;
+                    if (currentQ.difficulty === "Difficile") points = 20;
+                    player.score += points;
                 } else {
                     player.lives -= 1;
                     if (player.lives <= 0) {
@@ -124,17 +134,18 @@ function sendNextQuestion(roomCode) {
             questionNumber: room.currentQuestion + 1,
             total: questionsList.length,
             question: q.question,
-            options: q.options
+            options: q.options,
+            difficulty: q.difficulty // Envoi du niveau de difficulté
         });
         room.currentQuestion++;
 
         setTimeout(() => {
             sendNextQuestion(roomCode);
-        }, 10000);
+        }, 12000); // 12 secondes par question
     } else {
         io.to(roomCode).emit('gameOver', {
             players: room.players,
-            stats: { accuracy: 80, fastestPlayer: "Zabi", fastestTime: 1200 }
+            stats: { accuracy: 85, fastestPlayer: "Zabi", fastestTime: 1100 }
         });
     }
 }
