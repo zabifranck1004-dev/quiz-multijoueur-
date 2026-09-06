@@ -10,7 +10,6 @@ app.use(express.static('public'));
 
 const rooms = {};
 
-// Liste de questions enrichie avec les niveaux de difficulté
 const questionsList = [
     { question: "Quelle est la capitale de la France ?", options: ["Londres", "Berlin", "Paris", "Madrid"], answer: 2, difficulty: "Facile" },
     { question: "Combien font 5 x 8 ?", options: ["35", "40", "45", "50"], answer: 1, difficulty: "Facile" },
@@ -31,7 +30,8 @@ io.on('connection', (socket) => {
         rooms[roomCode] = {
             players: {},
             host: socket.id,
-            currentQuestion: 0
+            currentQuestion: 0,
+            timer: null
         };
         rooms[roomCode].players[socket.id] = {
             name: data.username,
@@ -64,46 +64,17 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room && room.host === socket.id) {
             room.currentQuestion = 0;
-            function sendNextQuestion(roomCode) {
-    const room = rooms[roomCode];
-    if (!room) return;
-
-    // Annuler un éventuel ancien chronomètre pour éviter les doublons
-    if (room.timer) clearTimeout(room.timer);
-
-    if (room.currentQuestion < questionsList.length) {
-        const q = questionsList[room.currentQuestion];
-        io.to(roomCode).emit('newQuestion', {
-            questionNumber: room.currentQuestion + 1,
-            total: questionsList.length,
-            question: q.question,
-            options: q.options,
-            difficulty: q.difficulty
-        });
-        room.currentQuestion++;
-
-        // 5 secondes pour lire et répondre avant de passer à la suite automatiquement
-        room.timer = setTimeout(() => {
             sendNextQuestion(roomCode);
-        }, 5000);
-    } else {
-        io.to(roomCode).emit('gameOver', {
-            players: room.players,
-            stats: { accuracy: 85, fastestPlayer: "Zabi", fastestTime: 1100 }
-        });
-    }
-}
         }
     });
 
     socket.on('submitAnswer', (data) => {
-        const room = rooms[roomCode];
+        const room = rooms[data.roomCode];
         if (room) {
             const player = room.players[socket.id];
             if (player && !player.isEliminated) {
                 const currentQ = questionsList[room.currentQuestion - 1];
                 if (currentQ && data.index === currentQ.answer) {
-                    // Bonus de points selon la difficulté
                     let points = 10;
                     if (currentQ.difficulty === "Moyen") points = 15;
                     if (currentQ.difficulty === "Difficile") points = 20;
@@ -156,6 +127,9 @@ io.on('connection', (socket) => {
 function sendNextQuestion(roomCode) {
     const room = rooms[roomCode];
     if (!room) return;
+
+    if (room.timer) clearTimeout(room.timer);
+
     if (room.currentQuestion < questionsList.length) {
         const q = questionsList[room.currentQuestion];
         io.to(roomCode).emit('newQuestion', {
@@ -163,13 +137,13 @@ function sendNextQuestion(roomCode) {
             total: questionsList.length,
             question: q.question,
             options: q.options,
-            difficulty: q.difficulty // Envoi du niveau de difficulté
+            difficulty: q.difficulty
         });
         room.currentQuestion++;
 
-        setTimeout(() => {
+        room.timer = setTimeout(() => {
             sendNextQuestion(roomCode);
-        }, 3000); // 12 secondes par question
+        }, 6000); // 6 secondes par question
     } else {
         io.to(roomCode).emit('gameOver', {
             players: room.players,
