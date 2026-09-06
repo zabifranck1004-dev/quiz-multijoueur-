@@ -241,7 +241,32 @@
         });
            function submitAnswers() {
             const answers = {};
-            document.querySelectorAll('.word-input').forEach(input => {
+            function submitAnswers() {
+        const answers = {};
+        document.querySelectorAll('.word-input').forEach(input => {
+            const category = input.getAttribute('data-cat');
+            answers[category] = input.value.trim();
+        });
+
+        // Envoyer les réponses au serveur
+        socket.emit('submitAnswers', answers);
+        
+        // Désactiver le bouton
+        const btn = document.querySelector('#gameScreen button');
+        btn.disabled = true;
+        btn.innerText = "En attente des autres joueurs...";
+        btn.style.backgroundColor = "#a0aec0";
+    }
+
+    // CES ÉCOUTEURS DOIVENT ÊTRE SORTIS DE LA FONCTION :
+    socket.on('waitingForOthers', () => {
+        alert("Réponses bien envoyées ! En attente des autres joueurs...");
+    });
+
+    socket.on('gameOver', (data) => {
+        alert("La manche est terminée !");
+        console.log("Résultats :", data.answers);
+    });
                 const category = input.getAttribute('data-cat');
                 answers[category] = input.value.trim();
             });
