@@ -64,7 +64,35 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room && room.host === socket.id) {
             room.currentQuestion = 0;
+            function sendNextQuestion(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    // Annuler un éventuel ancien chronomètre pour éviter les doublons
+    if (room.timer) clearTimeout(room.timer);
+
+    if (room.currentQuestion < questionsList.length) {
+        const q = questionsList[room.currentQuestion];
+        io.to(roomCode).emit('newQuestion', {
+            questionNumber: room.currentQuestion + 1,
+            total: questionsList.length,
+            question: q.question,
+            options: q.options,
+            difficulty: q.difficulty
+        });
+        room.currentQuestion++;
+
+        // 5 secondes pour lire et répondre avant de passer à la suite automatiquement
+        room.timer = setTimeout(() => {
             sendNextQuestion(roomCode);
+        }, 5000);
+    } else {
+        io.to(roomCode).emit('gameOver', {
+            players: room.players,
+            stats: { accuracy: 85, fastestPlayer: "Zabi", fastestTime: 1100 }
+        });
+    }
+}
         }
     });
 
