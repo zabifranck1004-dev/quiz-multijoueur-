@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Multijoueur</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
+    .hidden { display: none !important; }
+    button { cursor: pointer; padding: 10px 20px; font-size: 16px; border-radius: 8px; border: none; }
+    .btn-main { background: #864cbf; color: white; font-weight: bold; }
+    .podium-container { display: flex; justify-content: center; align-items: flex-end; height: 200px; margin: 30px 0; gap: 12px; }
+    .podium-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .podium-bar { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 22px; }
+    .step-1 .podium-bar { height: 130px; background: #ffd700; }
+    .step-2 .podium-bar { height: 90px; background: #c0c0c0; }
+    .step-3 .podium-bar { height: 60px; background: #cd7f32; }
+    .avatar-option { font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; border: 2px solid transparent; }
+    .avatar-option.selected { border-color: #864cbf; background-color: #f0e6ff; transform: scale(1.15); }
+    .opt-btn { background: #fff; border: 2px solid #ddd; padding: 15px; margin: 5px; width: 45%; font-size: 16px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Bouton Mute -->
+  <button id="muteBtn" onclick="toggleMute()" style="position: fixed; top: 15px; right: 15px; padding: 8px 12px; background: rgba(0,0,0,0.6); color: white; border-radius: 20px; z-index: 1000;">🔊 Son On</button>
+
+  <!-- Écran d'accueil -->
+  <div id="homeScreen">
+    <h1>🎮 Quiz Multijoueur</h1>
+    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Choisissez votre avatar :</label>
+    <div id="avatarPicker" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+      <span class="avatar-option selected" onclick="selectAvatar(this, '🦊')">🦊</span>
+      <span class="avatar-option" onclick="selectAvatar(this, '🐯')">🐯</span>
+      <span class="avatar-option" onclick="selectAvatar(this, '🤖')">🤖</span>
+      <span class="avatar-option" onclick="selectAvatar(this, '🦄')">🦄</span>
+    </div>
+    <input type="text" id="username" placeholder="Votre pseudo" style="padding: 10px; font-size: 16px; margin-bottom: 10px;"><br>
+    <button class="btn-main" onclick="createRoom()">Créer un salon</button>
+    <br><br>
+    <input type="text" id="roomInput" placeholder="Code du salon" style="padding: 10px; font-size: 16px; margin-bottom: 10px; text-transform: uppercase;"><br>
+    <button onclick="joinRoom()">Rejoindre un salon</button>
+  </div>
+
+  <!-- Lobby -->
+  <div id="lobbyScreen" class="hidden">
+    <h2 id="roomCodeDisplay"></h2>
+    <h3>Joueurs dans le salon :</h3>
+    <ul id="playerList" style="list-style: none; padding: 0;"></ul>
+    <button id="startBtn" class="btn-main hidden" onclick="startGame()">Démarrer la partie</button>
+  </div>
+
+  <!-- Écran de Jeu -->
+  <div id="gameScreen" class="hidden">
+    <h3 id="questionCounter"></h3>
+    <h2 id="questionText"></h2>
+    <div id="jokersBar" style="margin-bottom: 15px;">
+      <button id="btn5050" onclick="useJoker('fiftyFifty')" style="background: #ff9800; color: white;">🌓 50/50</button>
+      <button id="btnLife" onclick="useJoker('extraLife')" style="background: #e91e63; color: white;">❤️ +1 Vie</button>
+    </div>
+    <div id="optionsContainer">
+      <button class="opt-btn" onclick="sendAnswer(0)"></button>
+      <button class="opt-btn" onclick="sendAnswer(1)"></button>
+      <button class="opt-btn" onclick="sendAnswer(2)"></button>
+      <button class="opt-btn" onclick="sendAnswer(3)"></button>
+    </div>
+  </div>
+
+  <!-- Écran de Fin / Podium -->
+  <div id="endScreen" class="hidden">
+    <h1>🏆 Fin de partie ! 🏆</h1>
+    <div class="podium-container">
+      <div class="podium-step step-2"><div class="player-name" id="p2-name">-</div><div class="podium-bar">2</div><div class="player-score" id="p2-score"></div></div>
+      <div class="podium-step step-1"><div class="crown">👑</div><div class="player-name" id="p1-name">-</div><div class="podium-bar">1</div><div class="player-score" id="p1-score"></div></div>
+      <div class="podium-step step-3"><div class="player-name" id="p3-name">-</div><div class="podium-bar">3</div><div class="player-score" id="p3-score"></div></div>
+    </div>
+    <div id="statsBoard" style="background: rgba(0,0,0,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>📊 Statistiques</h3>
+      <p>Réussite : <strong id="statAccuracy">0%</strong></p>
+      <p>Plus rapide ⚡ : <strong id="statFastest">-</strong></p>
+    </div>
+    <button class="btn-main" onclick="location.reload()">Rejouer</button>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentRoom = '';
+    let isMuted = false;
+    let selectedAvatar = '🦊';
+
+    function selectAvatar(el, avatar) {
+      document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedAvatar = avatar;
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('muteBtn').innerText = isMuted ? '🔇 Son Off' : '🔊 Son On';
+    }
+
+    function createRoom() {
+      const name = document.getElementById('username').value;
+      if (name) socket.emit('createRoom', { username: name, avatar: selectedAvatar });
+    }
+
+    function joinRoom() {
+      const name = document.getElementById('username').value;
+      const code = document.getElementById('roomInput').value;
+      if (name && code) socket.emit('joinRoom', { roomCode: code, username: name, avatar: selectedAvatar });
+    }
+
+    socket.on('roomCreated', (data) => {
+      currentRoom = data.roomCode;
+      document.getElementById('homeScreen').classList.add('hidden');
+      document.getElementById('lobbyScreen').classList.remove('hidden');
+      document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
+      document.getElementById('startBtn').classList.remove('hidden');
+      renderPlayers(data.players);
+    });
+
+    socket.on('joinedSuccessfully', (data) => {
+      currentRoom = data.roomCode;
+      document.getElementById('homeScreen').classList.add('hidden');
+      document.getElementById('lobbyScreen').classList.remove('hidden');
+      document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
+    });
+
+    socket.on('updateRoom', (data) => {
+      renderPlayers(data.players);
+    });
+
+    function renderPlayers(players) {
+      const list = document.getElementById('playerList');
+      list.innerHTML = Object.values(players).map(p => {
+        const hearts = p.isEliminated ? '💀 Éliminé' : '❤️'.repeat(p.lives);
+        return `<li>${p.avatar} <strong>${p.name}</strong> : ${hearts} (${p.score} pts)</li>`;
+      }).join('');
+    }
+
+    function startGame() {
+      socket.emit('startGame', currentRoom);
+    }
+
+    socket.on('newQuestion', (data) => {
+      document.getElementById('lobbyScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('questionCounter').innerText = `Question ${data.questionNumber} / ${data.total}`;
+      document.getElementById('questionText').innerText = data.question;
+
+      const buttons = document.querySelectorAll('.opt-btn');
+      buttons.forEach((btn, idx) => {
+        btn.innerText = data.options[idx];
+        btn.style.visibility = 'visible';
+        btn.disabled = false;
+      });
+      document.getElementById('btn5050').disabled = false;
+    });
+
+    function sendAnswer(index) {
+      socket.emit('submitAnswer', { roomCode: currentRoom, index });
+      const buttons = document.querySelectorAll('.opt-btn');
+      buttons.forEach(b => b.disabled = true);
+    }
+
+    function useJoker(type) {
+      if (type === 'fiftyFifty') socket.emit('useFiftyFifty', currentRoom);
+      if (type === 'extraLife') socket.emit('useExtraLife', currentRoom);
+    }
+
+    socket.on('fiftyFiftyUsed', (removed) => {
+      document.getElementById('btn5050').disabled = true;
+      const buttons = document.querySelectorAll('.opt-btn');
+      removed.forEach(idx => buttons[idx].style.visibility = 'hidden');
+    });
+
+    socket.on('extraLifeUsed', () => {
+      document.getElementById('btn5050').disabled = true; 
+    });
+
+    socket.on('gameOver', (data) => {
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.remove('hidden');
+
+      const sorted = Object.values(data.players).sort((a, b) => b.score - a.score);
+      setPodium('p1', sorted[0]);
+      setPodium('p2', sorted[1]);
+      setPodium('p3', sorted[2]);
+
+      document.getElementById('statAccuracy').innerText = `${data.stats.accuracy}%`;
+      if (data.stats.fastestPlayer) {
+        document.getElementById('statFastest').innerText = `${data.stats.fastestPlayer} (${(data.stats.fastestTime/1000).toFixed(2)}s)`;
+      } else {
+        document.getElementById('statFastest').innerText = "Aucun";
+      }
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    });
+
+    function setPodium(prefix, player) {
+      document.getElementById(`${prefix}-name`).innerText = player ? player.name : '-';
+      document.getElementById(`${prefix}-score`).innerText = player ? `${player.score} pts` : '';
+    }
+  </script>
+</body>
+</html>
