@@ -201,11 +201,19 @@
             });
         }
 
-        function startGame() {
-            // Prochaine étape : envoyer l'ordre de démarrer au serveur
-            alert("Bientôt relié ! On va coder le lancement de la manche.");
+       function startGame() {
+            socket.emit('startGame');
         }
 
+        // Réception du signal de démarrage de partie
+        socket.on('gameStarted', (data) => {
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('currentLetterDisplay').innerText = data.letter;
+            
+            // Vider les champs de texte
+            document.querySelectorAll('.word-input').forEach(input => input.value = '');
+        });
         function submitAnswers() {
             alert("Réponses prêtes à être envoyées !");
         }
