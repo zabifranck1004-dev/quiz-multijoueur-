@@ -141,7 +141,7 @@ function sendNextQuestion(roomCode) {
 
         setTimeout(() => {
             sendNextQuestion(roomCode);
-        }, 12000); // 12 secondes par question
+        }, 3000); // 12 secondes par question
     } else {
         io.to(roomCode).emit('gameOver', {
             players: room.players,
