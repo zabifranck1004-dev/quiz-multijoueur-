@@ -146,7 +146,7 @@
     socket.on('newQuestion', (data) => {
       document.getElementById('lobbyScreen').classList.add('hidden');
       document.getElementById('gameScreen').classList.remove('hidden');
-      document.getElementById('questionCounter').innerText = `Question ${data.questionNumber} / ${data.total}`;
+      document.getElementById('questionCounter').innerText = `Question ${data.questionNumber} / ${data.total} — [${data.difficulty}]`;
       document.getElementById('questionText').innerText = data.question;
 
       const buttons = document.querySelectorAll('.opt-btn');
