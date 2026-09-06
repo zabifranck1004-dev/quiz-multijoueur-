@@ -300,6 +300,76 @@ function joinRoom() {
         return;
     }
     socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
+}// --- GESTION DES AVATARS ET DES SALONS ---
+let selectedAvatar = '🦊'; // Avatar par défaut
+
+function selectAvatar(element, avatar) {
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedAvatar = avatar;
+}
+
+function createRoom() {
+    const usernameInput = document.getElementById('username');
+    if (!usernameInput) return;
+    const username = usernameInput.value.trim();
+    if (!username) {
+        alert("Veuillez entrer un pseudo !");
+        return;
+    }
+    socket.emit('createRoom', { username: username, avatar: selectedAvatar });
+}
+
+function joinRoom() {
+    const usernameInput = document.getElementById('username');
+    const roomInput = document.getElementById('roomInput');
+    
+    if (!usernameInput || !roomInput) return;
+    
+    const username = usernameInput.value.trim();
+    const roomCode = roomInput.value.trim().toUpperCase();
+    
+    if (!username) {
+        alert("Veuillez entrer un pseudo !");
+        return;
+    }
+    if (!roomCode) {
+        alert("Veuillez entrer un code de salon !");
+        return;
+    }
+    socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
+}
+
+// Fonction pour gérer les sons de réussite ou d'erreur
+function playSound(type) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    } catch (e) {
+        console.log("Audio bloqué ou non pris en charge");
+    }
 }
 </script>
 </body>
