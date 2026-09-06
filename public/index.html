@@ -1,446 +1,214 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Quiz Multijoueur</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
-    .hidden { display: none !important; }
-    button { cursor: pointer; padding: 10px 20px; font-size: 16px; border-radius: 8px; border: none; }
-    .btn-main { background: #864cbf; color: white; font-weight: bold; }
-    .podium-container { display: flex; justify-content: center; align-items: flex-end; height: 200px; margin: 30px 0; gap: 12px; }
-    .podium-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
-    .podium-bar { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 22px; }
-    .step-1 .podium-bar { height: 130px; background: #ffd700; }
-    .step-2 .podium-bar { height: 90px; background: #c0c0c0; }
-    .step-3 .podium-bar { height: 60px; background: #cd7f32; }
-    .avatar-option { font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; border: 2px solid transparent; }
-    .avatar-option.selected { border-color: #864cbf; background-color: #f0e6ff; transform: scale(1.15); }
-    .opt-btn { background: #fff; border: 2px solid #ddd; padding: 15px; margin: 5px; width: 45%; font-size: 16px; border-radius: 8px; }
-  </style><!DOCTYPE html>
-<html lang="fr">
-<head>
     <meta charset="UTF-8">
-    <title>Quiz Multijoueur</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petit Bac Multijoueur</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #4a5568; margin-bottom: 20px; }
         .hidden { display: none !important; }
-        button { cursor: pointer; padding: 10px 20px; font-size: 16px; border-radius: 8px; border: none; }
-        .btn-main { background: #864cbf; color: white; font-weight: bold; }
-        .podium-container { display: flex; justify-content: center; align-items: flex-end; height: 200px; margin: 30px 0; gap: 12px; }
-        .podium-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .podium-bar { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
-        .step-1 .podium-bar { height: 130px; background: #ffd700; }
-        .step-2 .podium-bar { height: 90px; background: #c0c0c0; }
-        .step-3 .podium-bar { height: 60px; background: #cd7f32; }
-        .avatar-option { font-size: 28px; cursor: pointer; padding: 5px; border-radius: 8px; border: 2px solid transparent; }
-        .avatar-option.selected { border-color: #864cbf; background-color: #f0e6ff; transform: scale(1.15); }
-        .opt-btn { background: #fff; border: 2px solid #ddd; padding: 15px; margin: 5px; width: 45%; font-size: 16px; border-radius: 8px; }
-        
-        /* Nouveaux styles pour la barre de temps et les couleurs */
-        #timer-bar-container { width: 100%; height: 10px; background-color: #e0e0e0; margin-bottom: 10px; border-radius: 5px; overflow: hidden; display: none; }
-        #timer-bar { height: 100%; background-color: #4caf50; width: 100%; transition: width linear; }
-        .btn-correct { background-color: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
-        .btn-wrong { background-color: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #5a67d8; }
+        .avatar-picker {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        .avatar-option {
+            padding: 5px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        .avatar-option.selected {
+            border-color: #667eea;
+            transform: scale(1.1);
+            background: #edf2f7;
+        }
+        ul { list-style: none; padding: 0; text-align: left; }
+        ul li { background: #f7fafc; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+        .letter-display {
+            font-size: 48px;
+            color: #764ba2;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .category-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        .category-group label {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 14px;
+        }
     </style>
-</head>
 </head>
 <body>
 
-  <!-- Bouton Mute -->
-  <button id="muteBtn" onclick="toggleMute()" style="position: fixed; top: 15px; right: 15px; padding: 8px 12px; background: rgba(0,0,0,0.6); color: white; border-radius: 20px; z-index: 1000;">🔊 Son On</button>
+    <div class="container">
+        <!-- ÉCRAN D'ACCUEIL -->
+        <div id="homeScreen">
+            <h1>📝 Petit Bac Multijoueur</h1>
+            <label>Choisissez votre avatar :</label>
+            <div class="avatar-picker">
+                <span class="avatar-option selected" onclick="selectAvatar(this, '🦊')">🦊</span>
+                <span class="avatar-option" onclick="selectAvatar(this, '🐯')">🐯</span>
+                <span class="avatar-option" onclick="selectAvatar(this, '🤖')">🤖</span>
+                <span class="avatar-option" onclick="selectAvatar(this, '🦄')">🦄</span>
+            </div>
+            
+            <input type="text" id="usernameInput" placeholder="Votre pseudo">
+            <button onclick="createRoom()">Créer un salon</button>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e2e8f0;">
+            <input type="text" id="roomInput" placeholder="Code du salon" style="text-transform: uppercase;">
+            <button onclick="joinRoom()" style="background-color: #48bb78;">Rejoindre un salon</button>
+        </div>
 
-  <!-- Écran d'accueil -->
-  <div id="homeScreen">
-    <h1>🎮 Quiz Multijoueur</h1>
-    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Choisissez votre avatar :</label>
-    <div id="avatarPicker" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
-      <span class="avatar-option selected" onclick="selectAvatar(this, '🦊')">🦊</span>
-      <span class="avatar-option" onclick="selectAvatar(this, '🐯')">🐯</span>
-      <span class="avatar-option" onclick="selectAvatar(this, '🤖')">🤖</span>
-      <span class="avatar-option" onclick="selectAvatar(this, '🦄')">🦄</span>
+        <!-- LOBBY / SALON D'ATTENTE -->
+        <div id="lobbyScreen" class="hidden">
+            <h2 id="roomCodeDisplay">Salon : </h2>
+            <h3>Joueurs connectés :</h3>
+            <ul id="playerList"></ul>
+            <button id="startBtn" class="hidden" onclick="startGame()">Démarrer la partie</button>
+            <p id="waitMsg" style="color: #718096; font-style: italic;">En attendant que l'hôte lance la partie...</p>
+        </div>
+
+        <!-- ÉCRAN DE JEU -->
+        <div id="gameScreen" class="hidden">
+            <h3>Lettre tirée :</h3>
+            <div id="currentLetterDisplay" class="letter-display">?</div>
+            
+            <div class="category-group">
+                <label>Prénom :</label>
+                <input type="text" class="word-input" data-cat="prenom" placeholder="Ex: Marc">
+            </div>
+            <div class="category-group">
+                <label>Pays / Ville :</label>
+                <input type="text" class="word-input" data-cat="pays" placeholder="Ex: Maroc">
+            </div>
+            <div class="category-group">
+                <label>Animal :</label>
+                <input type="text" class="word-input" data-cat="animal" placeholder="Ex: Marmotte">
+            </div>
+            <div class="category-group">
+                <label>Métier :</label>
+                <input type="text" class="word-input" data-cat="metier" placeholder="Ex: Mécanicien">
+            </div>
+
+            <button onclick="submitAnswers()" style="background-color: #319795;">Valider mes réponses</button>
+        </div>
     </div>
-    <input type="text" id="username" placeholder="Votre pseudo" style="padding: 10px; font-size: 16px; margin-bottom: 10px;"><br>
-    <button class="btn-main" onclick="createRoom()">Créer un salon</button>
-    <br><br>
-    <input type="text" id="roomInput" placeholder="Code du salon" style="padding: 10px; font-size: 16px; margin-bottom: 10px; text-transform: uppercase;"><br>
-    <button onclick="joinRoom()">Rejoindre un salon</button>
-  </div>
 
-  <!-- Lobby -->
-  <div id="lobbyScreen" class="hidden">
-    <h2 id="roomCodeDisplay"></h2>
-    <h3>Joueurs dans le salon :</h3>
-    <ul id="playerList" style="list-style: none; padding: 0;"></ul>
-    <button id="startBtn" class="btn-main hidden" onclick="startGame()">Démarrer la partie</button>
-  </div>
+    <!-- SOCKET.IO CLIENT -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let selectedAvatar = '🦊';
+        let currentRoom = '';
 
-  <!-- Écran de Jeu -->
-  <div id="gameScreen" class="hidden">
-    <h3 id="questionCounter"></h3>
-    <h2 id="questionText"></h2>
-    <div id="jokersBar" style="margin-bottom: 15px;">
-      <button id="btn5050" onclick="useJoker('fiftyFifty')" style="background: #ff9800; color: white;">🌓 50/50</button>
-      <button id="btnLife" onclick="useJoker('extraLife')" style="background: #e91e63; color: white;">❤️ +1 Vie</button>
-    </div>
-    <div id="optionsContainer">
-      <button class="opt-btn" onclick="sendAnswer(0)"></button>
-      <button class="opt-btn" onclick="sendAnswer(1)"></button>
-      <button class="opt-btn" onclick="sendAnswer(2)"></button>
-      <button class="opt-btn" onclick="sendAnswer(3)"></button>
-    </div>
-  </div>
-
-  <!-- Écran de Fin / Podium -->
-  <div id="endScreen" class="hidden">
-    <h1>🏆 Fin de partie ! 🏆</h1>
-    <div class="podium-container">
-      <div class="podium-step step-2"><div class="player-name" id="p2-name">-</div><div class="podium-bar">2</div><div class="player-score" id="p2-score"></div></div>
-      <div class="podium-step step-1"><div class="crown">👑</div><div class="player-name" id="p1-name">-</div><div class="podium-bar">1</div><div class="player-score" id="p1-score"></div></div>
-      <div class="podium-step step-3"><div class="player-name" id="p3-name">-</div><div class="podium-bar">3</div><div class="player-score" id="p3-score"></div></div>
-    </div>
-    <div id="statsBoard" style="background: rgba(0,0,0,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-      <h3>📊 Statistiques</h3>
-      <p>Réussite : <strong id="statAccuracy">0%</strong></p>
-      <p>Plus rapide ⚡ : <strong id="statFastest">-</strong></p>
-    </div>
-    <button class="btn-main" onclick="location.reload()">Rejouer</button>
-  </div>
-
-  <script>
-    const socket = io();
-    let currentRoom = '';
-    let isMuted = false;
-    let selectedAvatar = '🦊';
-
-    function selectAvatar(el, avatar) {
-      document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedAvatar = avatar;
-    }
-
-    function toggleMute() {
-      isMuted = !isMuted;
-      document.getElementById('muteBtn').innerText = isMuted ? '🔇 Son Off' : '🔊 Son On';
-    }
-
-    function createRoom() {
-      const name = document.getElementById('username').value;
-      if (name) socket.emit('createRoom', { username: name, avatar: selectedAvatar });
-    }
-
-    function joinRoom() {
-      const name = document.getElementById('username').value;
-      const code = document.getElementById('roomInput').value;
-      if (name && code) socket.emit('joinRoom', { roomCode: code, username: name, avatar: selectedAvatar });
-    }
-
-    socket.on('roomCreated', (data) => {
-      currentRoom = data.roomCode;
-      document.getElementById('homeScreen').classList.add('hidden');
-      document.getElementById('lobbyScreen').classList.remove('hidden');
-      document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
-      document.getElementById('startBtn').classList.remove('hidden');
-      renderPlayers(data.players);
-    });
-
-    socket.on('joinedSuccessfully', (data) => {
-      currentRoom = data.roomCode;
-      document.getElementById('homeScreen').classList.add('hidden');
-      document.getElementById('lobbyScreen').classList.remove('hidden');
-      document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
-    });
-
-    socket.on('updateRoom', (data) => {
-      renderPlayers(data.players);
-    });
-
-    function renderPlayers(players) {// --- GESTION DES AVATARS ET DES SALONS ---
-let selectedAvatar = '🦊'; // Avatar par défaut
-
-function selectAvatar(element, avatar) {
-    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedAvatar = avatar;
-}
-
-function createRoom() {
-    const usernameInput = document.getElementById('username');
-    if (!usernameInput) return;
-    const username = usernameInput.value.trim();
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    socket.emit('createRoom', { username: username, avatar: selectedAvatar });
-}
-
-function joinRoom() {
-    const usernameInput = document.getElementById('username');
-    const roomInput = document.getElementById('roomInput');
-    
-    if (!usernameInput || !roomInput) return;
-    
-    const username = usernameInput.value.trim();
-    const roomCode = roomInput.value.trim().toUpperCase();
-    
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    if (!roomCode) {
-        alert("Veuillez entrer un code de salon !");
-        return;
-    }
-    socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
-}
-
-// Fonction pour gérer les sons de réussite ou d'erreur
-function playSound(type) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        if (type === 'correct') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        } else if (type === 'wrong') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+        function selectAvatar(element, avatar) {
+            document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAvatar = avatar;
         }
-    } catch (e) {
-        console.log("Audio bloqué ou non pris en charge");
-    }
-}
-      const list = document.getElementById('playerList');
-      list.innerHTML = Object.values(players).map(p => {
-        const hearts = p.isEliminated ? '💀 Éliminé' : '❤️'.repeat(p.lives);
-        return `<li>${p.avatar} <strong>${p.name}</strong> : ${hearts} (${p.score} pts)</li>`;
-      }).join('');
-    }
 
-    function startGame() {
-      socket.emit('startGame', currentRoom);
-    }
-
-    socket.on('newQuestion', (data) => {
-      document.getElementById('lobbyScreen').classList.add('hidden');
-      document.getElementById('gameScreen').classList.remove('hidden');
-      document.getElementById('questionCounter').innerText = `Question ${data.questionNumber} / ${data.total} — [${data.difficulty}]`;
-      document.getElementById('questionText').innerText = data.question;
-
-      const buttons = document.querySelectorAll('.opt-btn');
-      buttons.forEach((btn, idx) => {
-        btn.innerText = data.options[idx];
-        btn.style.visibility = 'visible';
-        btn.disabled = false;
-      });
-      document.getElementById('btn5050').disabled = false;
-    });
-
-    function sendAnswer(index) {
-      socket.emit('submitAnswer', { roomCode: currentRoom, index });
-      const buttons = document.querySelectorAll('.opt-btn');
-      buttons.forEach(b => b.disabled = true);
-    }
-
-    function useJoker(type) {
-      if (type === 'fiftyFifty') socket.emit('useFiftyFifty', currentRoom);
-      if (type === 'extraLife') socket.emit('useExtraLife', currentRoom);
-    }
-
-    socket.on('fiftyFiftyUsed', (removed) => {
-      document.getElementById('btn5050').disabled = true;
-      const buttons = document.querySelectorAll('.opt-btn');
-      removed.forEach(idx => buttons[idx].style.visibility = 'hidden');
-    });
-
-    socket.on('extraLifeUsed', () => {
-      document.getElementById('btn5050').disabled = true; 
-    });
-
-    socket.on('gameOver', (data) => {
-      document.getElementById('gameScreen').classList.add('hidden');
-      document.getElementById('endScreen').classList.remove('hidden');
-
-      const sorted = Object.values(data.players).sort((a, b) => b.score - a.score);
-      setPodium('p1', sorted[0]);
-socket.on('gameOver', (data) => {
-    document.getElementById('gameScreen').classList.add('hidden');
-    document.getElementById('timer-bar-container').style.display = 'none'; // Masquer la barre de temps
-    document.getElementById('endScreen').classList.remove('hidden');
-
-    const sorted = Object.values(data.players).sort((a, b) => b.score - a.score);
-    setPodium('p1', sorted[0]);
-    setPodium('p2', sorted[1]);
-    setPodium('p3', sorted[2]);
-
-    document.getElementById('statAccuracy').innerText = `${data.stats.accuracy}%`;
-    if (data.stats.fastestPlayer) {
-        document.getElementById('statFastest').innerText = `${data.stats.fastestPlayer} (${(data.stats.fastestTime/1000).toFixed(2)}s)`;
-    } else {
-        document.getElementById('statFastest').innerText = "Aucun";
-    }
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-});
-
-function setPodium(prefix, player) {
-    document.getElementById(`${prefix}-nom`).innerText = player ? player.name : '-';
-    document.getElementById(`${prefix}-score`).innerText = player ? `${player.score} pts` : '';
-}
-
-// Fonction pour gérer les sons de réussite ou d'erreur
-function playSound(type) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        if (type === 'correct') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        } else if (type === 'wrong') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+        function createRoom() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) return alert("Entre un pseudo !");
+            socket.emit('createRoom', { username, avatar: selectedAvatar });
         }
-    } catch (e) {
-        console.log("Audio bloqué ou non pris en charge");
-    }
-}let selectedAvatar = '🦊'; // Avatar par défaut
 
-// Gestion du choix de l'avatar
-function selectAvatar(element, avatar) {
-    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedAvatar = avatar;
-}
-
-// Fonction appelée quand on clique sur "Créer un salon"
-function createRoom() {
-    const username = document.getElementById('username').value.trim();
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    socket.emit('createRoom', { username: username, avatar: selectedAvatar });
-}
-
-// Fonction appelée quand on clique sur "Rejoindre un salon"
-function joinRoom() {
-    const username = document.getElementById('username').value.trim();
-    const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
-    
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    if (!roomCode) {
-        alert("Veuillez entrer un code de salon !");
-        return;
-    }
-    socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
-}// --- GESTION DES AVATARS ET DES SALONS ---
-let selectedAvatar = '🦊'; // Avatar par défaut
-
-function selectAvatar(element, avatar) {
-    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedAvatar = avatar;
-}
-
-function createRoom() {
-    const usernameInput = document.getElementById('username');
-    if (!usernameInput) return;
-    const username = usernameInput.value.trim();
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    socket.emit('createRoom', { username: username, avatar: selectedAvatar });
-}
-
-function joinRoom() {
-    const usernameInput = document.getElementById('username');
-    const roomInput = document.getElementById('roomInput');
-    
-    if (!usernameInput || !roomInput) return;
-    
-    const username = usernameInput.value.trim();
-    const roomCode = roomInput.value.trim().toUpperCase();
-    
-    if (!username) {
-        alert("Veuillez entrer un pseudo !");
-        return;
-    }
-    if (!roomCode) {
-        alert("Veuillez entrer un code de salon !");
-        return;
-    }
-    socket.emit('joinRoom', { username: username, roomCode: roomCode, avatar: selectedAvatar });
-}
-
-// Fonction pour gérer les sons de réussite ou d'erreur
-function playSound(type) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        if (type === 'correct') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        } else if (type === 'wrong') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+        function joinRoom() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const roomCode = document.getElementById('roomInput').value.trim().toUpperCase();
+            if (!username || !roomCode) return alert("Entre un pseudo et un code de salon !");
+            socket.emit('joinRoom', { username, roomCode, avatar: selectedAvatar });
         }
-    } catch (e) {
-        console.log("Audio bloqué ou non pris en charge");
-    }
-}
-</script>
+
+        socket.on('roomCreated', (data) => {
+            currentRoom = data.roomCode;
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
+            document.getElementById('startBtn').classList.remove('hidden'); // L'hôte peut démarrer
+            document.getElementById('waitMsg').classList.add('hidden');
+            updatePlayerList(data.players);
+        });
+
+        socket.on('roomJoined', (data) => {
+            currentRoom = data.roomCode;
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            document.getElementById('roomCodeDisplay').innerText = `Salon : ${data.roomCode}`;
+            updatePlayerList(data.players);
+        });
+
+        socket.on('updatePlayers', (players) => {
+            updatePlayerList(players);
+        });
+
+        socket.on('errorMsg', (msg) => {
+            alert(msg);
+        });
+
+        function updatePlayerList(players) {
+            const list = document.getElementById('playerList');
+            list.innerHTML = '';
+            players.forEach(p => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${p.avatar}</span> <strong>${p.username}</strong>`;
+                list.appendChild(li);
+            });
+        }
+
+        function startGame() {
+            // Prochaine étape : envoyer l'ordre de démarrer au serveur
+            alert("Bientôt relié ! On va coder le lancement de la manche.");
+        }
+
+        function submitAnswers() {
+            alert("Réponses prêtes à être envoyées !");
+        }
+    </script>
 </body>
 </html>
